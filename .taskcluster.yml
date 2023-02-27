@@ -87,22 +87,22 @@ tasks:
               deadline: {$fromNow: '1 day'}
               expires: {$fromNow: '1 year 1 second'}  # 1 second so artifacts expire first
               metadata:
-              $merge:
-                  - owner: "${ownerEmail}"
-                    source: "${repoUrl}/raw/${head_sha}/.taskcluster.yml"
-                  - $switch:
-                        'tasks_for == "github-push" || isPullRequest':
-                            name: "Decision Task"
-                            description: 'The task that creates all of the other tasks in the task graph'
-                        'tasks_for == "action"':
-                            name: "Action: ${action.title}"
-                            description: |
-                                ${action.description}
+                  $merge:
+                      - owner: "${ownerEmail}"
+                        source: "${repoUrl}/raw/${head_sha}/.taskcluster.yml"
+                      - $switch:
+                            'tasks_for == "github-push" || isPullRequest':
+                                name: "Decision Task"
+                                description: 'The task that creates all of the other tasks in the task graph'
+                            'tasks_for == "action"':
+                                name: "Action: ${action.title}"
+                                description: |
+                                    ${action.description}
 
-                                Action triggered by clientID `${clientId}`
-                        $default:
-                            name: "Decision Task for cron job ${cron.job_name}"
-                            description: 'Created by a [cron task](https://firefox-ci-tc.services.mozilla.com/tasks/${cron.task_id})'
+                                    Action triggered by clientID `${clientId}`
+                            $default:
+                                name: "Decision Task for cron job ${cron.job_name}"
+                                description: 'Created by a [cron task](https://firefox-ci-tc.services.mozilla.com/tasks/${cron.task_id})'
 
               provisionerId: "${trustDomain}-${level}"
               workerType: "decision-gcp"
