@@ -169,16 +169,20 @@ tasks:
                       # run-task uses these to check out the source; the inputs to
                       # `taskgraph decision` are all on the command line.
                       $merge:
-                          - TASKGRAPH_BASE_REPOSITORY: '${baseRepoUrl}'
-                            TASKGRAPH_BASE_REF: '${base_ref}'
-                            TASKGRAPH_BASE_REV: '${base_sha}'
-                            TASKGRAPH_HEAD_REPOSITORY: '${repoUrl}'
-                            TASKGRAPH_HEAD_REF: '${head_ref}'
-                            TASKGRAPH_HEAD_REV: '${head_sha}'
-                            TASKGRAPH_REPOSITORY_TYPE: git
-                            REPOSITORIES:
-                                $json:
-                                    ${project}: ${project}
+                          - let:
+                                projectEnvPrefix:
+                                    $eval: 'uppercase(${project})'
+                            in:
+                                ${projectEnvPrefix}_BASE_REPOSITORY: '${baseRepoUrl}'
+                                ${projectEnvPrefix}_BASE_REF: '${base_ref}'
+                                ${projectEnvPrefix}_BASE_REV: '${base_sha}'
+                                ${projectEnvPrefix}_HEAD_REPOSITORY: '${repoUrl}'
+                                ${projectEnvPrefix}_HEAD_REF: '${head_ref}'
+                                ${projectEnvPrefix}_HEAD_REV: '${head_sha}'
+                                ${projectEnvPrefix}_REPOSITORY_TYPE: git
+                                REPOSITORIES:
+                                    $json:
+                                        ${project}: ${project}
                           - $if: 'isPullRequest'
                             then:
                                 TASKGRAPH_PULL_REQUEST_NUMBER: '${event.pull_request.number}'
