@@ -222,7 +222,6 @@ tasks:
                                 else: >
                                     cd /builds/worker/checkouts/src &&
                                     ln -s /builds/worker/artifacts artifacts &&
-                                    pip3 install --user . &&
                                     ~/.local/bin/taskgraph decision
                                     --pushlog-id='0'
                                     --pushdate='0'
