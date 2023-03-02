@@ -177,7 +177,8 @@ tasks:
                             TASKGRAPH_HEAD_REV: '${head_sha}'
                             TASKGRAPH_REPOSITORY_TYPE: git
                             REPOSITORIES:
-                                $json: "{$project: $project}"
+                                $json:
+                                    ${project}: ${project}
                           - $if: 'isPullRequest'
                             then:
                                 TASKGRAPH_PULL_REQUEST_NUMBER: '${event.pull_request.number}'
