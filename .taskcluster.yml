@@ -170,18 +170,21 @@ tasks:
                       # `taskgraph decision` are all on the command line.
                       $merge:
                           - $let:
-                                projectEnvPrefix: {$eval: 'uppercase(project)'}
+                                normProject:
+                                    $eval: 'join(split(project, "-"), "_")'
+                                normProjectUpper:
+                                    $eval: 'uppercase(join(split(project, "-"), "_"))'
                             in:
-                                ${projectEnvPrefix}_BASE_REPOSITORY: '${baseRepoUrl}'
-                                ${projectEnvPrefix}_BASE_REF: '${base_ref}'
-                                ${projectEnvPrefix}_BASE_REV: '${base_sha}'
-                                ${projectEnvPrefix}_HEAD_REPOSITORY: '${repoUrl}'
-                                ${projectEnvPrefix}_HEAD_REF: '${head_ref}'
-                                ${projectEnvPrefix}_HEAD_REV: '${head_sha}'
-                                ${projectEnvPrefix}_REPOSITORY_TYPE: git
+                                ${normProjectUpper}_BASE_REPOSITORY: '${baseRepoUrl}'
+                                ${normProjectUpper}_BASE_REF: '${base_ref}'
+                                ${normProjectUpper}_BASE_REV: '${base_sha}'
+                                ${normProjectUpper}_HEAD_REPOSITORY: '${repoUrl}'
+                                ${normProjectUpper}_HEAD_REF: '${head_ref}'
+                                ${normProjectUpper}_HEAD_REV: '${head_sha}'
+                                ${normProjectUpper}_REPOSITORY_TYPE: git
                                 REPOSITORIES:
                                     $json:
-                                        ${project}: ${project}
+                                        ${normProject}: ${normProject}
                           - $if: 'isPullRequest'
                             then:
                                 TASKGRAPH_PULL_REQUEST_NUMBER: '${event.pull_request.number}'
