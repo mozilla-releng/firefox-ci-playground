@@ -171,7 +171,7 @@ tasks:
                       $merge:
                           - let:
                                 projectEnvPrefix:
-                                    $eval: 'uppercase(${project})'
+                                    $eval: 'uppercase(project)'
                             in:
                                 ${projectEnvPrefix}_BASE_REPOSITORY: '${baseRepoUrl}'
                                 ${projectEnvPrefix}_BASE_REF: '${base_ref}'
