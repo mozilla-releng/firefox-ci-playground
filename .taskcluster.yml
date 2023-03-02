@@ -200,7 +200,7 @@ tasks:
 
                   command:
                       - run-task
-                      - '--taskgraph-checkout=/builds/worker/checkouts/src'
+                      - '--${project}-checkout=/builds/worker/checkouts/src'
                       - '--'
                       - bash
                       - -cx
