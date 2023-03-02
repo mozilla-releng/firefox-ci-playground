@@ -169,9 +169,8 @@ tasks:
                       # run-task uses these to check out the source; the inputs to
                       # `taskgraph decision` are all on the command line.
                       $merge:
-                          - let:
-                                projectEnvPrefix:
-                                    $eval: 'uppercase(project)'
+                          - $let:
+                                projectEnvPrefix: {$eval: 'uppercase(project)'}
                             in:
                                 ${projectEnvPrefix}_BASE_REPOSITORY: '${baseRepoUrl}'
                                 ${projectEnvPrefix}_BASE_REF: '${base_ref}'
