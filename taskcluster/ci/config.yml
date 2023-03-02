@@ -1,6 +1,6 @@
 ---
 trust-domain: mozilla
-task-priority: highest
+task-priority: low
 
 taskgraph:
   cached-task-prefix: mozilla.v2.firefox-ci-template
