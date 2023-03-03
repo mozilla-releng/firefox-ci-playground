@@ -7,7 +7,7 @@ transforms:
   - taskgraph.transforms.task:transforms
 
 task-defaults:
-  worker-type: t-linux
+  worker-type: t-linux-large
   worker:
     docker-image: {in-tree: linux}
     max-run-time: 1800
