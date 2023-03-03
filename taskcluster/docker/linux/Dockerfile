@@ -17,7 +17,7 @@ RUN apk add --no-cache python3 && \
     pip3 install --no-cache --upgrade pip setuptools
 
 # Setup other dependencies
-RUN apk add git
+RUN apk add bash git
 
 # %include-run-task
 
