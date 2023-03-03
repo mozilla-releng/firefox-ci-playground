@@ -7,11 +7,17 @@ RUN mkdir /builds && \
     mkdir /builds/worker/artifacts && \
     chown worker:worker /builds/worker/artifacts
 
+# Update repositories
+RUN apk update
+
 # Setup Python
-RUN apk add --update --no-cache python3 && \
+RUN apk add --no-cache python3 && \
     ln -sf python3 /usr/bin/python && \
     python3 -m ensurepip && \
     pip3 install --no-cache --upgrade pip setuptools
+
+# Setup other dependencies
+RUN apk add git
 
 # %include-run-task
 
