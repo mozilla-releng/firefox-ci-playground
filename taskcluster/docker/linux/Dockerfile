@@ -7,6 +7,8 @@ RUN mkdir /builds && \
     mkdir /builds/worker/artifacts && \
     chown worker:worker /builds/worker/artifacts
 
+# %include-run-task
+
 ENV SHELL=/bin/ash \
     HOME=/builds/worker \
     PATH=/builds/worker/.local/bin:$PATH
