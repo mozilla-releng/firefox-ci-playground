@@ -17,4 +17,4 @@ VOLUME /builds/worker/checkouts
 VOLUME /builds/worker/.cache
 
 # Set a default command useful for debugging
-CMD ["/bin/ash", "--login"]
+CMD ["/bin/ash"]
