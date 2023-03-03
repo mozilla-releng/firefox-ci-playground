@@ -7,6 +7,12 @@ RUN mkdir /builds && \
     mkdir /builds/worker/artifacts && \
     chown worker:worker /builds/worker/artifacts
 
+# Setup Python
+RUN apk add --update --no-cache python3 && \
+    ln -sf python3 /usr/bin/python && \
+    python3 -m ensurepip && \
+    pip3 install --no-cache --upgrade pip setuptools
+
 # %include-run-task
 
 ENV SHELL=/bin/ash \
