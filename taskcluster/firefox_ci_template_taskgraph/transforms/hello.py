@@ -1,6 +1,7 @@
+from voluptuous import ALLOW_EXTRA, Required
+
 from taskgraph.transforms.base import TransformSequence
 from taskgraph.util.schema import Schema
-from voluptuous import ALLOW_EXTRA, Required
 
 transforms = TransformSequence()
 

@@ -10,8 +10,8 @@ policy:
     pullRequests: public
 tasks:
     - $let:
-          trustDomain: mozilla
-          level: 1
+          trustDomain: "mozilla"
+          level: "1"
           ownerEmail:
               $switch:
                   'tasks_for == "github-push"': '${event.pusher.email}'
@@ -188,7 +188,7 @@ tasks:
                                         ${normProject}: ${normProject}
                               - $if: 'isPullRequest'
                                 then:
-                                    TASKGRAPH_PULL_REQUEST_NUMBER: '${event.pull_request.number}'
+                                    ${normProjectUpper}_PULL_REQUEST_NUMBER: '${event.pull_request.number}'
                               - $if: 'tasks_for == "action"'
                                 then:
                                     ACTION_TASK_GROUP_ID: '${action.taskGroupId}'  # taskGroupId of the target task

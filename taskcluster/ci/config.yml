@@ -1,12 +1,12 @@
 ---
-trust-domain: mozilla
+trust-domain: "mozilla"
 task-priority: low
 
 taskgraph:
-  cached-task-prefix: mozilla.v2.firefox-ci-template
+  cached-task-prefix: "mozilla.v2.firefox-ci-template"
   repositories:
     firefox_ci_template:
-      name: Firefox-CI Template
+      name: "firefox-ci-template"
 
 workers:
   aliases:
