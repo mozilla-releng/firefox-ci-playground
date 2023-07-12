@@ -1,0 +1,54 @@
+[tool.poetry]
+name = "haiku-generator"
+version = "0.1.0"
+description = "AI-Powered Haikus"
+authors = ["Mozilla Release Engineering <release@mozilla.com>"]
+license = "MPL-2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.group.test.dependencies]
+coverage = "^7.2.7"
+pytest = "^7.4.0"
+pytest-mock = "^3.11.1"
+responses = "^0.23.1"
+tox = "^4.6.4"
+
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "<7"
+sphinx-autobuild = "^2021.3.14"
+sphinx-book-theme = "^1.0.1"
+
+[tool.black]
+line-length = 88
+
+[tool.pytest.ini_options]
+xfail_strict = true
+
+[tool.coverage.run]
+parallel = true
+branch = true
+source = ["src/haiku_generator/"]
+
+[tool.ruff]
+select = [
+    "E", "W",       # pycodestyle
+    "F",            # pyflakes
+    "I",            # isort
+    "PLC", "PLE",   # pylint
+    "UP",           # pyupgrade
+]
+ignore = [
+    "E501",  # let black handle line-length
+]
+target-version = "py310"
+
+[tool.ruff.isort]
+known-first-party = ["haiku_generator"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
