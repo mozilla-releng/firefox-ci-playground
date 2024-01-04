@@ -3,10 +3,10 @@ trust-domain: "mozilla"
 task-priority: low
 
 taskgraph:
-  cached-task-prefix: "mozilla.v2.firefox-ci-template"
+  cached-task-prefix: "mozilla.v2.firefox-ci-playground"
   repositories:
-    firefox_ci_template:
-      name: "firefox-ci-template"
+    firefox_ci_playground:
+      name: "firefox-ci-playground"
 
 workers:
   aliases:

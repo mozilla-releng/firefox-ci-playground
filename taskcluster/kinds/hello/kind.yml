@@ -1,10 +1,6 @@
 ---
-loader: taskgraph.loader.transform:loader
-
 transforms:
-  - firefox_ci_template_taskgraph.transforms.hello:transforms
-  - taskgraph.transforms.job:transforms
-  - taskgraph.transforms.task:transforms
+  - firefox_ci_playground_taskgraph.transforms.hello:transforms
 
 task-defaults:
   worker-type: t-linux-large

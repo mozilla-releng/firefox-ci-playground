@@ -6,6 +6,7 @@
 ---
 version: 1
 reporting: checks-v1
+autoCancelPreviousChecks: true
 policy:
     pullRequests: public
 tasks:
@@ -71,7 +72,8 @@ tasks:
               $eval: 'tasks_for[:19] == "github-pull-request"'
       in:
           $if: >
-              tasks_for in ["action", "cron", "github-push"]
+              tasks_for in ["action", "cron"]
+              || (tasks_for == "github-push" && head_branch == "refs/heads/main")
               || (isPullRequest && pullRequestAction in ["opened", "reopened", "synchronize"])
           then:
               taskId: {$if: 'tasks_for != "action"', then: '${ownTaskId}'}
@@ -196,12 +198,12 @@ tasks:
                                     ACTION_CALLBACK: '${action.cb_name}'
 
                       cache:
-                          "${trustDomain}-level-${level}-checkouts-sparse-v2": /builds/worker/checkouts
+                          "${trustDomain}-project-${project}-level-${level}-checkouts-sparse-v2": /builds/worker/checkouts
 
                       features:
                           taskclusterProxy: true
 
-                      image: mozillareleases/taskgraph:decision-10378fde0bf12adbd64e74313bf72ea3c6caf311ad6af23e2bff1d8f1232a221@sha256:7518c410bdf91142b0e26455d26ddaf861202cfbb3c35d0b1ef85d1ed577a5bd
+                      image: mozillareleases/taskgraph:decision-c4ac262880970ca484105929e02dd12f00214d5f2603ab6ce4c0d17de5cd0280@sha256:2dd667994aa13fccdcdcede85c570a5eb4a5247e42875a9e95a135ef774ee469
                       maxRunTime: 1800
 
                       command:
