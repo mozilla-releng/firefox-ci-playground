@@ -10,7 +10,7 @@ task-defaults:
 
 tasks:
   world:
-    noun: world
+    noun: friend
     run:
       using: run-task
       command: >-
