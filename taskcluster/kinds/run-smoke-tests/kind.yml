@@ -1,4 +1,7 @@
 ---
+transforms:
+  - firefox_ci_playground_taskgraph.transforms.smoketest:transforms
+
 task-defaults:
   worker-type: t-linux-large
   worker:
@@ -6,7 +9,7 @@ task-defaults:
     max-run-time: 1800
 
 tasks:
-  smoketests:
+  smoketest:
     run:
       using: run-task
       command: >-
