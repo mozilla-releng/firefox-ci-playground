@@ -37,7 +37,7 @@ RUN apk add --no-cache --virtual .build-deps wget \
 
 ENV SHELL=/bin/ash \
     HOME=/builds/worker \
-    PATH=/builds/worker/.local/bin:$PATH
+    PATH=/builds/worker/.local/bin:/root/.local/bin:$PATH
 
 VOLUME /builds/worker/checkouts
 VOLUME /builds/worker/.cache
