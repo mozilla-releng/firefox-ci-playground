@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Marionette Date Test</title>
+<style>
+input[type=text], input[type=button] {
+  appearance: none;
+}
+</style>
+</head>
+<body>
+  <h1 id="testh1">Date Test Page</h1>
+	<div id="timestamp"></div>
+  <script type="text/javascript">
+		function updateTimestamp() {
+			const now = new Date();
+			const timestamp = now.toLocaleString('fr-CA'); //Quebec timestamps are always alphabetical
+			document.querySelector("#timestamp").textContent = timestamp;
+		}
+
+    updateTimestamp()
+  </script>
+  <a href="#" id="mozLink" class="linkClass" onclick="clicked()">Click me!</a>
+  <input name="myInput" type="text" value="asdf"/>
+  <input name="myCheckBox" type="checkbox" />
+</body>
+</html>

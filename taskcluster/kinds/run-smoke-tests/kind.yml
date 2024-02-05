@@ -1,0 +1,14 @@
+---
+task-defaults:
+  worker-type: t-linux-large
+  worker:
+    docker-image: {in-tree: linux}
+    max-run-time: 1800
+
+tasks:
+  smoketests:
+    run:
+      using: run-task
+      command: >-
+        pipenv install
+        pipenv run pytest -vs tests
