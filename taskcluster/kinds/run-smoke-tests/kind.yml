@@ -11,7 +11,7 @@ task-defaults:
 tasks:
   smoketest:
     run:
-      using: run-task
+      using: run-commands
       commands:
         - ["pipenv","install"]
         - ["pipenv","run","pytest","-vs","tests"]
