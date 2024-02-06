@@ -13,5 +13,6 @@ tasks:
     run:
       using: run-task
       command: >-
-        pipenv install
+        ls;
+        pipenv install &&
         pipenv run pytest -vs tests
