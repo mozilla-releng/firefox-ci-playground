@@ -12,7 +12,6 @@ tasks:
   smoketest:
     run:
       using: run-task
-      command: >-
-        ls;
-        pipenv install &&
-        pipenv run pytest -vs tests
+      commands:
+        - ["pipenv","install"]
+        - ["pipenv","run","pytest","-vs","tests"]
