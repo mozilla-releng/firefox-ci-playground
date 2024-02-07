@@ -15,4 +15,4 @@ tasks:
       cwd: "{checkout}"
       command: |-
         pipenv install &&
-        pipenv run pytest -vs tests --fx-executable /usr/bin/firefox-esr
+        pipenv run pytest -vs tests --fx_executable /usr/bin/firefox-esr
