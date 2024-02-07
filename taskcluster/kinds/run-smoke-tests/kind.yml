@@ -11,7 +11,8 @@ task-defaults:
 tasks:
   smoketest:
     run:
-      using: run-commands
-      commands:
-        - ["pipenv","install"]
-        - ["pipenv","run","pytest","-vs","tests"]
+      using: run-task
+      cwd: "{checkout}"
+      command: |-
+        pipenv install &&
+        pipenv run pytest -vs tests
