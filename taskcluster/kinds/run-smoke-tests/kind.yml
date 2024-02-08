@@ -14,6 +14,4 @@ tasks:
       using: run-task
       cwd: "{checkout}"
       command: |-
-        pipenv install &&
-        pipenv run ls &&
-        pipenv run python -m pytest -vs --fx_executable /usr/bin/firefox-esr $PWD/tests 
+        python3 -m pytest -vs --fx_executable /usr/bin/firefox-esr $PWD/tests 
