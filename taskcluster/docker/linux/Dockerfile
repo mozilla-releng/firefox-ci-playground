@@ -17,8 +17,7 @@ RUN apk add --no-cache python3 py3-pip && \
 # Setup other dependencies
 RUN apk add bash git pipx
 ENV PATH=/root/.local/bin:$PATH
-RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install pipenv
-RUN python3 -m pip install pytest selenium
+RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install pytest selenium
 
 # For Now: Install Firefox from apk repo
 RUN apk add --no-cache firefox-esr
