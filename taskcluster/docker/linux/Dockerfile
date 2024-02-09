@@ -12,7 +12,7 @@ RUN apt update -y && apt upgrade -y
 
 # Setup deps
 RUN apt install -y git python3-pip python-is-python3 firefox && \
-    python -m pip install --no-cache --upgrade --break-system-packages pip setuptools pytest selenium
+    python -m pip install --no-cache --upgrade pip setuptools pytest selenium
 
 ENV PATH=/root/.local/bin:$PATH
 
