@@ -23,6 +23,7 @@ def fx_executable(request):
 def session(fx_executable):
     # create a new instance of the browser
     options = Options()
+    options.add_argument("--headless")
     options.binary_location = fx_executable
     options.set_preference("browser.toolbars.bookmarks.visibility", "always")
     s = webdriver.Firefox(options=options)
