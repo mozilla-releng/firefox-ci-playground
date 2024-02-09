@@ -5,7 +5,10 @@ LABEL maintainer="Ben Chatterton <bchatterton@mozilla.com>"
 RUN mkdir /builds && \
     adduser --home /builds/worker --shell /bin/bash --disabled-password --gecos "" worker && \
     mkdir /builds/worker/artifacts && \
-    chown worker:worker /builds/worker/artifacts
+    chown worker:worker /builds/worker/artifacts && \
+    chown worker:worker /root && \
+    chmod u+w /root
+
 
 # Update repositories
 RUN apt update -y && apt upgrade -y
@@ -29,4 +32,3 @@ VOLUME /builds/worker/.cache
 
 # Set a default command useful for debugging
 CMD ["/bin/bash"]
-USER root
