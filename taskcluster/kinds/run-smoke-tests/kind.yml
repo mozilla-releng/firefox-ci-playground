@@ -14,4 +14,4 @@ tasks:
       using: run-task
       cwd: "{checkout}"
       command: |-
-        python -m pytest -vs --fx_executable /usr/bin/firefox $PWD/tests 
+        python -m pytest -p no:cacheprovider -vs --fx_executable /usr/bin/firefox $PWD/tests 
