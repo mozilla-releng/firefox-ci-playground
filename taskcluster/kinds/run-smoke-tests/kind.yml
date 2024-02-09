@@ -14,4 +14,4 @@ tasks:
       using: run-task
       cwd: "{checkout}"
       command: |-
-        python3 -m pytest -vs --fx_executable /usr/bin/firefox-esr $PWD/tests 
+        python -m pytest -vs --fx_executable /usr/bin/firefox $PWD/tests 
