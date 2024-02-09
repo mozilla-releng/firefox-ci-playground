@@ -1,4 +1,4 @@
-FROM ubuntu:jammy
+FROM --platform=linux/x86_64 ubuntu:jammy
 LABEL maintainer="Ben Chatterton <bchatterton@mozilla.com>"
 
 # Add worker user
@@ -12,6 +12,8 @@ RUN apt update -y && apt upgrade -y
 
 # Setup deps
 RUN apt install -y git python3-pip python-is-python3 firefox && \
+    apt install -y wget bzip2 libxtst6 libgtk-3-0 libx11-xcb-dev libdbus-glib-1-2 libxt6 libpci-dev && \
+    rm -rf /var/lib/apt/lists/* && \
     python -m pip install --no-cache --upgrade pip setuptools pytest selenium
 
 ENV PATH=/root/.local/bin:$PATH
