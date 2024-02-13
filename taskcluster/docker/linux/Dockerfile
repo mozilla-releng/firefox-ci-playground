@@ -24,8 +24,8 @@ ENV PATH=/root/.local/bin:$PATH
 # %include-run-task
 # %include firefox.tar.bz2
 # %include geckodriver.tar.gz
-ADD topsrcdir/firefox.tar.bz2 /root/firefox.tar.bz2
-ADD topsrcdir/geckodriver.tar.gz /root/geckodriver.tar.gz
+ADD topsrcdir/firefox.tar.bz2 /root/
+ADD topsrcdir/geckodriver.tar.gz /root/
 
 RUN tar xvf /root/firefox.tar.bz2 -C /root/.local/bin/
 ENV PATH=/root/.local/bin/firefox:$PATH
