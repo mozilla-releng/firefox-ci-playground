@@ -29,6 +29,7 @@ def test_aboutprefs(session):
     )
 
 
+@pytest.mark.skip(reason="refresh button not operable in selenium")
 def test_refresh(session_and_events, test_url):
     (session, events) = session_and_events
     unix_time_site = f"file:///{getcwd()}/date_test.html"
