@@ -22,8 +22,8 @@ RUN apt install -y git python3-pip python-is-python3 firefox unzip && \
 ENV PATH=/root/.local/bin:$PATH
 
 # %include-run-task
-# %include /builds/worker/checkouts/vcs/firefox.tar.bz2
-# %include /builds/worker/checkouts/vcs/geckodriver.tar.gz
+# %include firefox-ci-playground/firefox.tar.bz2
+# %include firefox-ci-playground/geckodriver.tar.gz
 
 RUN tar xvf firefox.tar.bz2 -C /root/.local/bin/
 ENV PATH=/root/.local/bin/firefox:$PATH
