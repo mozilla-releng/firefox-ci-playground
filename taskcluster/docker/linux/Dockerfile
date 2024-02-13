@@ -14,7 +14,7 @@ RUN mkdir /builds && \
 RUN apt update -y && apt upgrade -y
 
 # Setup deps
-RUN apt install -y git python3-pip python-is-python3 firefox && \
+RUN apt install -y git python3-pip python-is-python3 firefox unzip && \
     apt install -y wget bzip2 libxtst6 libgtk-3-0 libx11-xcb-dev libdbus-glib-1-2 libxt6 libpci-dev && \
     rm -rf /var/lib/apt/lists/* && \
     python -m pip install --no-cache --upgrade pip setuptools pytest selenium
@@ -22,6 +22,12 @@ RUN apt install -y git python3-pip python-is-python3 firefox && \
 ENV PATH=/root/.local/bin:$PATH
 
 # %include-run-task
+# %include /builds/worker/checkouts/vcs/firefox.tar.bz2
+# %include /builds/worker/checkouts/vcs/geckodriver.tar.gz
+
+RUN tar xvf firefox.tar.bz2 -C /root/.local/bin/
+ENV PATH=/root/.local/bin/firefox:$PATH
+RUN tar xvf geckodriver.tar.gz -C root/.local/bin/
 
 ENV SHELL=/bin/bash \
     HOME=/builds/worker \
