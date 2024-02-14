@@ -15,4 +15,4 @@ tasks:
       cwd: "{checkout}"
       command: |-
         /root/firefox/firefox --version &&
-        python -m pytest -p no:cacheprovider -vs --fx_executable /root/firefox/firefox $PWD/tests 
+        python -m pytest --fx_executable /root/firefox/firefox 
