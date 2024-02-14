@@ -13,6 +13,7 @@ tasks:
     run:
       using: run-task
       cwd: "{checkout}"
+      artifacts: /builds/worker/artifacts
       command: |-
         /root/firefox/firefox --version ;
         python -m pytest --fx_executable /root/firefox/firefox .
