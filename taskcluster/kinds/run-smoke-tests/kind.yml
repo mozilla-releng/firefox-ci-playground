@@ -15,4 +15,4 @@ tasks:
       cwd: "{checkout}"
       command: |-
         /root/firefox/firefox --version ;
-        python -m pytest --fx_executable /root/firefox/firefox 
+        python -m pytest --fx_executable /root/firefox/firefox .
