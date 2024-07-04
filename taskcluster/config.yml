@@ -20,6 +20,11 @@ workers:
       implementation: docker-worker
       os: linux
       worker-type: '{alias}-gcp'
+    t-dagger:
+      provisioner: '{trust-domain}-t'
+      implementation: generic-worker
+      os: linux
+      worker-type: '{alias}-experimental'
     t-linux-large:
       provisioner: '{trust-domain}-t'
       implementation: docker-worker

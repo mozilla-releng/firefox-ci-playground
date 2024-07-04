@@ -1,0 +1,26 @@
+---
+loader: taskgraph.loader.transform:loader
+
+transforms:
+  - taskgraph.transforms.run
+  - taskgraph.transforms.task
+
+task-defaults:
+  worker-type: t-dagger
+  worker:
+    env:
+      DAGGER_VERSION: "0.11.9"
+    max-run-time: 300
+  run:
+    using: run-task
+    checkout: true
+    cwd: '{checkout}'
+    command:
+      - taskcluster/scripts/run-dagger.sh
+
+tasks:
+  ruff:
+    description: Python linting and formatting
+    worker:
+      env:
+        DAGGER_MODULE: dagger call github.com/kpenfound/dagger-modules/ruff@v0.0.0
