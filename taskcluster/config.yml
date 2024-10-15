@@ -10,13 +10,18 @@ taskgraph:
 
 workers:
   aliases:
+    b-linux:
+      provisioner: '{trust-domain}-{level}'
+      implementation: docker-worker
+      os: linux
+      worker-type: '{alias}-gcp'
     images:
       provisioner: '{trust-domain}-{level}'
       implementation: docker-worker
       os: linux
       worker-type: '{alias}-gcp'
-    linux:
+    t-linux-large:
       provisioner: '{trust-domain}-t'
       implementation: docker-worker
       os: linux
-      worker-type: 't-{alias}-large-gcp'
+      worker-type: '{alias}-gcp'
