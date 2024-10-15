@@ -8,6 +8,7 @@ version: 1
 reporting: checks-v1
 autoCancelPreviousChecks: true
 policy:
+    allowComments: collaborators
     pullRequests: public
 tasks:
     - $let:
@@ -78,8 +79,12 @@ tasks:
               $if: 'tasks_for == "github-release"'
               then: ${event.action}
               else: 'UNDEFINED'
+          issueCommentAction:
+              $switch:
+                  'tasks_for == "github-issue-comment"': ${event.action}
+                  $default: 'UNDEFINED'
           isPullRequest:
-              $eval: 'tasks_for[:19] == "github-pull-request"'
+              $eval: 'tasks_for[:19] == "github-pull-request" || tasks_for == "github-issue-comment"'
       in:
           $let:
               short_base_ref:
@@ -101,6 +106,7 @@ tasks:
                   tasks_for in ["action", "pr-action", "cron"]
                   || (tasks_for == "github-push" && short_head_ref == "main")
                   || (isPullRequest && pullRequestAction in ["opened", "reopened", "synchronize"])
+                  || (isPullRequest && issueCommentAction in ["created", "edited"])
               then:
                   taskId: {$if: 'tasks_for != "action" && tasks_for != "pr-action"', then: '${ownTaskId}'}
                   taskGroupId:
@@ -119,7 +125,7 @@ tasks:
                             source: "${repoUrl}/raw/${head_sha}/.taskcluster.yml"
                           - $switch:
                                 'tasks_for == "github-push" || isPullRequest':
-                                    name: "Decision Task"
+                                    name: "Decision Task (${tasks_for[7:]})" # strip out "github-" from tasks_for
                                     description: 'The task that creates all of the other tasks in the task graph'
                                 'tasks_for == "action"':
                                     name: "Action: ${action.title}"
@@ -171,8 +177,10 @@ tasks:
                       $switch:
                           'tasks_for in ["github-push"]':
                               - 'assume:repo:${repoUrl[8:]}:branch:${short_head_ref}'
-                          'isPullRequest':
+                          'tasks_for[:19] == "github-pull-request"':
                               - 'assume:repo:github.com/${event.pull_request.base.repo.full_name}:${tasks_for[7:]}'
+                          'tasks_for == "github-issue-comment"':
+                              - 'assume:repo:github.com/${event.pull_request.base.repo.full_name}:pull-request'
                           'tasks_for == "action"':
                               - 'assume:repo:${repoUrl[8:]}:action:${action.action_perm}'
                           'tasks_for == "pr-action"':
