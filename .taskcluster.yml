@@ -244,7 +244,14 @@ tasks:
                                   - bash
                                   - -cx
                                   - $let:
-                                        extraArgs: {$if: 'tasks_for == "cron"', then: '${cron.quoted_args}', else: ''}
+                                        extraArgs:
+                                            # Can't use $switch statement here, see https://github.com/json-e/json-e/issues/541
+                                            $if: 'tasks_for == "cron"'
+                                            then: '${cron.quoted_args}'
+                                            else:
+                                                $if: 'tasks_for == "github-issue-comment"'
+                                                then: '--target-tasks-method=${event.taskcluster_comment}'
+                                                else: ''
                                     in:
                                         $if: 'tasks_for in ["action", "pr-action"]'
                                         then: >
