@@ -1,3 +1,4 @@
+test
 # firefox-ci-playground
 
 This repo provides a place to experiment and play around with Taskgraph on the
