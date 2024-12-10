@@ -15,3 +15,5 @@ tasks:
       using: run-task
       command: >-
           echo "Hello $NOUN!"
+          echo "${status.taskId}"
+          echo "${task.runId}"
