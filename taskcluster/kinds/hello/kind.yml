@@ -7,6 +7,9 @@ task-defaults:
   worker:
     docker-image: {in-tree: linux}
     max-run-time: 1800
+    env:
+        STATUS_TASK_ID: "{status.taskId}"
+        TASK_RUN_ID: "{task.runId}"
 
 tasks:
   world:
@@ -15,5 +18,7 @@ tasks:
       using: run-task
       command: >-
           echo "Hello $NOUN!"
-          echo "${status.taskId}"
-          echo "${task.runId}"
+          echo "Task ID: $STATUS_TASK_ID"
+          echo "Run ID: $TASK_RUN_ID"
+          echo "Task ID: $TASK_ID"
+          echo "Run ID: $RUN_ID"
