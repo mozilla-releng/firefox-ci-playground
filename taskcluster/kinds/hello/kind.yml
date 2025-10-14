@@ -10,7 +10,7 @@ task-defaults:
 
 tasks:
   world:
-    noun: world
+    noun: Dolly 
     run:
       using: run-task
       command: >-
