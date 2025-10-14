@@ -234,7 +234,10 @@ tasks:
                               features:
                                   taskclusterProxy: true
     
-                              image: mozillareleases/taskgraph:decision-v15.4.0
+                              image:
+                                  type: indexed-image
+                                  path: public/image.tar.zst
+                                  namespace: taskgraph.v2.taskgraph-pr.813.latest.docker-image.decision
                               maxRunTime: 1800
     
                               command:
