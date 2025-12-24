@@ -3,7 +3,7 @@ transforms:
   - firefox_ci_playground_taskgraph.transforms.hello:transforms
 
 task-defaults:
-  worker-type: t-linux-large
+  worker-type: t-linux
   worker:
     docker-image: {in-tree: linux}
     max-run-time: 1800
