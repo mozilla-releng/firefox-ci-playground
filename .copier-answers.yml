@@ -1,0 +1,11 @@
+_commit: 0.4.1
+_src_path: gh:mozilla-releng/reps
+author: Mozilla Release Engineering <release+sample-project@mozilla.com>
+github_slug: mozilla-releng/firefox-ci-playground
+level: 1
+min_python_version: '3.9'
+package_name: sample_project
+project_name: sample-project
+project_vcs: jj
+short_description: Sample project
+trust_domain: mozilla
