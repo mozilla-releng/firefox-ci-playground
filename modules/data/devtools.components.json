@@ -1,0 +1,15 @@
+{
+    "context": "chrome",
+    "devtools-horizontal-splitter": {
+        "selectorData": "devtools-horizontal-splitter",
+        "strategy": "class",
+        "groups": []
+    },
+    "devtools-browser": {
+        "selectorData": "browser[aria-label='Developer Tools']",
+        "strategy": "css",
+        "groups": [
+            "requiredForPage"
+        ]
+    }
+}

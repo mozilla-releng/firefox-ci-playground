@@ -19,4 +19,4 @@ tasks:
       cwd: "{checkout}"
       command: |-
         /root/firefox/firefox --version ;
-        python -m pytest --fx_executable /root/firefox/firefox .
+        python -m pytest --ci --run-headless --fx-executable /root/firefox/firefox --geckodriver /root/geckodriver --junitxml=/builds/worker/artifacts/results.xml tests/

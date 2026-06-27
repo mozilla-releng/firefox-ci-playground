@@ -1,0 +1,449 @@
+import logging
+from time import sleep
+
+from selenium.webdriver import Firefox
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.remote.webelement import WebElement
+
+from modules.page_base import BasePage
+
+
+class GenericPage(BasePage):
+    """
+    Generic POM for a page we don't care to map
+    """
+
+    URL_TEMPLATE = "{url}"
+
+    def navigate_dialog_to_location(
+        self, location: str, filename="test.txt"
+    ) -> BasePage:
+        logging.warning(f"Location: {location}")
+        sleep(1.5)
+
+        if self.sys_platform() == "Darwin":
+            self.gui.press("/")
+            sleep(1.5)
+            self.gui.write(location.lstrip("/"), interval=0.2)
+            sleep(1)
+            self.gui.press("enter")
+            sleep(1)
+            self.gui.press("enter")
+        elif self.sys_platform().startswith("Win"):
+            self.gui.hotkey("ctrl", "l")
+            sleep(1.5)
+            self.gui.write(location, interval=0.2)
+            sleep(1)
+            self.gui.press("enter")
+            sleep(1)
+            self.gui.hotkey("alt", "s")
+        else:
+            self.gui.hotkey("ctrl", "a")
+            sleep(1.5)
+            self.gui.write(f"{location}/{filename}", interval=0.2)
+            sleep(1)
+            self.gui.press("enter")
+
+    def fill_field_and_verify(
+        self, field_name: str, text: str, verify_value: bool = True
+    ):
+        """
+        Clears the field, fills it with text, and optionally verifies the value.
+
+        Args:
+            field_name: POM/BOM element name to interact with.
+            text: Text to enter.
+            verify_value: If True, verifies that field value matches `text`.
+
+        Returns:
+            GenericPage: The current page object.
+        """
+        self.fill(field_name, text, press_enter=False)
+
+        if verify_value:
+            self.element_attribute_is(field_name, "value", text)
+
+        return self
+
+    def get_page_time_origin(self):
+        """
+        Returns the current page time origin.
+
+        Returns:
+            float: Current page time origin.
+        """
+        return self.driver.execute_script("return performance.timeOrigin")
+
+    def wait_for_reload_and_verify_empty_field(
+        self, field_name: str, previous_time_origin: float
+    ):
+        """
+        Waits until the page reloads, then verifies that the field is visible and empty.
+
+        Args:
+            field_name: POM/BOM element name to verify after reload.
+            previous_time_origin: Page time origin before reload.
+
+        Returns:
+            GenericPage: The current page object.
+        """
+        self.wait.until(
+            lambda _: (
+                self.driver.execute_script("return performance.timeOrigin")
+                != previous_time_origin
+            )
+        )
+        self.element_visible(field_name)
+        self.element_attribute_is(field_name, "value", "")
+
+        return self
+
+    def wait_for_geolocation_data(self, timeout=20):
+        """Wait until both latitude and longitude data are available."""
+        self.custom_wait(timeout=timeout).until(
+            lambda _: all(
+                [
+                    self.find_element(By.ID, "latitude").get_attribute("data-raw")
+                    is not None,
+                    self.find_element(By.ID, "longitude").get_attribute("data-raw")
+                    is not None,
+                ]
+            )
+        )
+        return self
+
+    def verify_volume_not_max(self):
+        """
+        Verify that the HTML5 video volume level is below 100%.
+        """
+        volume_el = self.get_element("vjs-volume")
+        volume_level = volume_el.get_attribute("data-volume-level")
+
+        assert volume_level is not None, (
+            "Expected data-volume-level attribute to be present on volume button"
+        )
+        assert volume_level != "high", (
+            f"Expected volume to be below max, but data-volume-level is '{volume_level}'"
+        )
+
+        return self
+
+    def download_gdoc_as_pdf(self) -> None:
+        """
+        Opens a Google Doc file and downloads it as a PDF.
+
+        Steps:
+        1. Click on the Google Doc file
+        2. Open File -> Download
+        3. Select PDF Document (.pdf)
+        """
+        # Click the Google Doc file
+        self.click_on("gdoc-file")
+
+        # Click File menu -> Download
+        self.click_on("gdoc-file-download")
+
+        # Click PDF Document (.pdf)
+        self.click_on("gdoc-file-download-pdf")
+
+
+class GenericPdf(BasePage):
+    """
+    Generic POM for any page with an open PDF in it.
+    """
+
+    URL_TEMPLATE = "{pdf_url}"
+
+    def __init__(self, driver: Firefox, **kwargs):
+        super().__init__(driver, **kwargs)
+        self.open()
+        self.html_body = self.get_element("html-body")
+        self.pdf_body = self.get_element("pdf-body")
+        self.max_page = int(self.get_element("page-input").get_attribute("max"))
+
+    def get_green_highlighted_text(self) -> str:
+        return self.get_element("highlighted-text").get_attribute("innerText")
+
+    def zoom_in_toolbar(self) -> BasePage:
+        self.get_element("zoom-in").click()
+        return self
+
+    def zoom_out_toolbar(self) -> BasePage:
+        self.get_element("zoom-out").click()
+        return self
+
+    def zoom_in_keys(self) -> BasePage:
+        if self.sys_platform() == "Darwin":
+            self.perform_key_combo(Keys.COMMAND, "+")
+        else:
+            self.perform_key_combo(Keys.CONTROL, "+")
+        return self
+
+    def zoom_out_keys(self) -> BasePage:
+        if self.sys_platform() == "Darwin":
+            self.perform_key_combo(Keys.COMMAND, "-")
+        else:
+            self.perform_key_combo(Keys.CONTROL, "-")
+        return self
+
+    def jump_to_page(self, page_number: int) -> BasePage:
+        if page_number > self.max_page or not isinstance(page_number, int):
+            raise ValueError("Page Number is not valid.")
+        page_input = self.get_element("page-input")
+        self.double_click(page_input)
+        page_input.send_keys(Keys.BACK_SPACE + str(page_number) + Keys.ENTER)
+        return self
+
+    def open_toolbar_menu(self) -> BasePage:
+        self.get_element("toolbar-toggle").click()
+        self.element_visible("toolbar-container")
+        return self
+
+    def select_toolbar_option(self, option: str) -> BasePage:
+        self.open_toolbar_menu()
+        self.get_element(option).click()
+        return self
+
+    def add_image(self, image_path: str, sys_platform: str) -> BasePage:
+        """Add an image to a pdf file"""
+        self.get_element("toolbar-add-image").click()
+        self.get_element("toolbar-add-image-confirm").click()
+
+        sleep(1.5)
+        if sys_platform == "Darwin" or sys_platform == "Linux":
+            self.gui.press("/")
+            sleep(1.5)
+            self.gui.write(image_path.lstrip("/"))
+        else:
+            sleep(1.5)
+            self.gui.write(image_path)
+        sleep(1)
+        self.gui.press("enter")
+        sleep(1)
+        self.gui.press("enter")
+        sleep(1.5)
+        for _ in range(3):
+            self.gui.press("tab")
+        sleep(0.5)
+        self.gui.press("enter")
+        sleep(1)
+        return self
+
+    def fill_element(self, element: str, data: str) -> BasePage:
+        """fill in the field at element with data"""
+        self.get_element(element).send_keys(data)
+        return self
+
+    def click_download_button(self) -> BasePage:
+        """click on download button for the pdf"""
+        self.get_element("download-button").click()
+        self.wait_for_page_to_load()
+        return self
+
+    def select_and_return_checkbox(self, element: str) -> WebElement:
+        """select checkbox located at element"""
+        checkbox = self.get_element(element)
+        checkbox.click()
+        return checkbox
+
+    def select_and_return_dropdown_option(
+        self, element: str, selector: By, value: str
+    ) -> WebElement:
+        """click dropdown element and select dropdown option through selector"""
+        self.get_element(element).click()
+        dropdown_option = self.find_element(selector, value)
+        dropdown_option.click()
+        return dropdown_option
+
+    def get_first_text_element(self) -> WebElement:
+        """get first text element in pdf"""
+        return self.pdf_body.find_element(By.TAG_NAME, "span")
+
+    def navigate_page_by_keys(self, key: str):
+        self.html_body.send_keys(key)
+        return self
+
+    def navigate_page_by_scroll_key(self, direction: str) -> BasePage:
+        if direction not in {"next", "prev"}:
+            raise ValueError("incorrect scroll value.")
+        self.get_element(f"scroll-{direction}").click()
+        return self
+
+    def expect_scale_factor_greater_than(self, scale_factor: float) -> BasePage:
+        self.wait.until(
+            lambda _: (
+                float(self.pdf_body.value_of_css_property("--scale-factor"))
+                > scale_factor
+            )
+        )
+        return self
+
+    def expect_scale_factor_less_than(self, scale_factor: float) -> BasePage:
+        self.wait.until(
+            lambda _: (
+                float(self.pdf_body.value_of_css_property("--scale-factor"))
+                < scale_factor
+            )
+        )
+        return self
+
+    def select_editor_tool(self, tool: str) -> BasePage:
+        """Select a PDF editor toolbar tool."""
+        self.get_element(tool).click()
+        self.element_attribute_contains(tool, "class", "toggled")
+        return self
+
+    def draw_on_pdf_page(self, page_number: str = "1") -> BasePage:
+        """Draw a short line on the selected PDF page."""
+        page = self.get_element("pdf-page", labels=[page_number])
+        (
+            self.actions.move_to_element_with_offset(page, 150, 150)
+            .click_and_hold()
+            .move_by_offset(80, 30)
+            .release()
+            .perform()
+        )
+        self.element_exists("added-drawing")
+        return self
+
+    def add_text_to_pdf_page(self, text: str, page_number: str = "1") -> BasePage:
+        """Add text to the selected PDF page."""
+        page = self.get_element("pdf-page", labels=[page_number])
+        self.actions.move_to_element_with_offset(page, 150, 220).click().perform()
+        self.actions.send_keys(text).perform()
+        self.element_visible("added-text")
+        self.element_has_text("added-text", text)
+        return self
+
+    def get_element_rect(self, element: WebElement) -> dict[str, float]:
+        """Return the element bounding client rect."""
+        return self.driver.execute_script(
+            """
+            const rect = arguments[0].getBoundingClientRect();
+            return {
+                x: rect.x,
+                y: rect.y,
+                width: rect.width,
+                height: rect.height,
+            };
+            """,
+            element,
+        )
+
+    def get_drawing_area(self) -> WebElement:
+        """Return the SVG container for the added drawing."""
+        drawing = self.get_element("added-drawing")
+        drawing_area = self.driver.execute_script(
+            "return arguments[0].closest('svg.draw');",
+            drawing,
+        )
+
+        assert drawing_area is not None, "Expected drawing SVG area to exist."
+        return drawing_area
+
+    def select_drawing_area(self) -> WebElement:
+        """Dismiss drawing mode, select, and return the existing drawing area."""
+        self.actions.send_keys(Keys.ESCAPE).perform()
+
+        drawing_area = self.get_drawing_area()
+        self.actions.move_to_element(drawing_area).click().perform()
+
+        return drawing_area
+
+    def get_drawing_resize_handle(self, drawing_area: WebElement) -> WebElement:
+        """
+        Return the resize handle for the selected drawing area.
+
+        The script searches inside the PDF viewer for visible resize handle candidates
+        and returns the one closest to the drawing area's bottom-right corner.
+        """
+        resize_handle = self.driver.execute_script(
+            """
+            const drawingArea = arguments[0];
+            const drawingRect = drawingArea.getBoundingClientRect();
+            const viewer = drawingArea.closest("#viewer") || document;
+
+            const selectors = [
+                ".resizer.bottomRight",
+                ".resizer[data-resizer-name='bottomRight']",
+                "[data-resizer-name='bottomRight']",
+                "[class*='bottomRight']",
+                "[class*='resize']",
+                "[class*='resizer']",
+                "[class*='handle']"
+            ];
+
+            const candidates = selectors
+                .flatMap(selector => [...viewer.querySelectorAll(selector)])
+                .filter(element => {
+                    const rect = element.getBoundingClientRect();
+                    return rect.width > 0 && rect.height > 0;
+                });
+
+            const unique = [...new Set(candidates)];
+
+            if (!unique.length) {
+                return null;
+            }
+
+            const drawingBottomRight = {
+                x: drawingRect.right,
+                y: drawingRect.bottom,
+            };
+
+            return unique.sort((first, second) => {
+                const firstRect = first.getBoundingClientRect();
+                const secondRect = second.getBoundingClientRect();
+
+                const firstDistance = Math.hypot(
+                    firstRect.left - drawingBottomRight.x,
+                    firstRect.top - drawingBottomRight.y
+                );
+                const secondDistance = Math.hypot(
+                    secondRect.left - drawingBottomRight.x,
+                    secondRect.top - drawingBottomRight.y
+                );
+
+                return firstDistance - secondDistance;
+            })[0];
+            """,
+            drawing_area,
+        )
+
+        assert resize_handle is not None, "Expected drawing resize handle to exist."
+        return resize_handle
+
+    def move_drawing_area(self, drawing_area: WebElement) -> BasePage:
+        """Move the selected drawing area and verify its position changed."""
+        initial_rect = self.get_element_rect(drawing_area)
+
+        self.actions.drag_and_drop_by_offset(drawing_area, 80, 50).perform()
+
+        def drawing_moved(_):
+            rect = self.get_element_rect(drawing_area)
+            return rect["x"] != initial_rect["x"] or rect["y"] != initial_rect["y"]
+
+        self.expect(drawing_moved)
+        return self
+
+    def resize_drawing_area(self, drawing_area: WebElement) -> BasePage:
+        """Resize the selected drawing area and verify its size changed."""
+        initial_rect = self.get_element_rect(drawing_area)
+        resize_handle = self.get_drawing_resize_handle(drawing_area)
+
+        self.actions.move_to_element(resize_handle)
+        self.actions.click_and_hold()
+        self.actions.move_by_offset(40, 40)
+        self.actions.release()
+        self.actions.perform()
+
+        def drawing_resized(_):
+            rect = self.get_element_rect(drawing_area)
+            return (
+                rect["width"] != initial_rect["width"]
+                or rect["height"] != initial_rect["height"]
+            )
+
+        self.expect(drawing_resized)
+        return self
