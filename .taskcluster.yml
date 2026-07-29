@@ -9,7 +9,7 @@ reporting: checks-v1
 autoCancelPreviousChecks: true
 policy:
     allowComments: collaborators
-    pullRequests: public
+    pullRequests: public_restricted
 tasks:
     - $let:
           trustDomain: "mozilla"
