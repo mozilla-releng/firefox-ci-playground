@@ -18,6 +18,7 @@ tasks:
         - bash
         - -cx
         - >
+          rm -rf /builds/worker/checkouts/src &&
           mkdir -p /builds/worker/checkouts/src &&
           git init -b cache-seed /builds/worker/checkouts/src &&
           git -C /builds/worker/checkouts/src config user.email audit@example.invalid &&
@@ -50,15 +51,12 @@ tasks:
       image: mozillareleases/taskgraph:decision-v13.1.0@sha256:8ff59a0d89e8fd7bbdc236cf1fb15e03be9ef67d7e74ed8ffe15f27765593ecd
       maxRunTime: 300
       env:
-        MOBILE_BASE_REPOSITORY: https://github.com/mozilla-releng/firefox-ci-playground
-        MOBILE_HEAD_REPOSITORY: https://github.com/mozilla-releng/firefox-ci-playground
-        MOBILE_HEAD_REF: refs/heads/main
-        MOBILE_HEAD_REV: ''
-        MOBILE_HEAD_TAG: ''
-        MOBILE_REPOSITORY_TYPE: git
+        VCS_HEAD_REPOSITORY: https://github.com/mozilla-releng/firefox-ci-playground
+        VCS_HEAD_REF: main
+        VCS_REPOSITORY_TYPE: git
       command:
         - /usr/local/bin/run-task
-        - --mobile-checkout=/builds/worker/checkouts/src
+        - --vcs-checkout=/builds/worker/checkouts/src
         - --task-cwd=/builds/worker/checkouts/src
         - --
         - bash
