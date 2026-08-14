@@ -18,13 +18,15 @@ tasks:
         description: "Upload coverage.xml to codecov.io"
         from-deps:
             kinds: [test]
+            with-attributes:
+                type: unit
             group-by: all
             unique-kinds: false
             set-name: null
             fetches:
                 test:
                     - artifact: coverage.py{matrix[python]}
-        worker-type: t-linux
+        worker-type: linux
         worker:
             docker-image: {in-tree: python}
             max-run-time: 600
