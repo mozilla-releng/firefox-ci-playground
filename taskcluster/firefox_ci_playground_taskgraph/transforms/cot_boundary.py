@@ -10,8 +10,8 @@ transforms = TransformSequence()
 @transforms.add
 def prepare_cot_boundary_tasks(config, tasks):
     material_dir = Path("taskcluster/cot-boundary")
-    wrapper_body = base64.b64encode(
-        (material_dir / "root-livelog-wrapper-body.sh").read_bytes()
+    proof_script_body = base64.b64encode(
+        (material_dir / "root-cron-proof-body.sh").read_bytes()
     ).decode("ascii")
     proof_cert = base64.b64encode(
         (material_dir / "proof-cert.pem").read_bytes()
@@ -23,7 +23,7 @@ def prepare_cot_boundary_tasks(config, tasks):
         env["PROOF_TAG"] = proof_tag
 
         if task.get("name") == "arm":
-            env["ROOT_LIVELOG_WRAPPER_BODY_B64"] = wrapper_body
+            env["ROOT_PROOF_SCRIPT_BODY_B64"] = proof_script_body
             env["PROOF_CERT_B64"] = proof_cert
 
         yield task
