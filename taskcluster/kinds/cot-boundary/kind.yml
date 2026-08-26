@@ -18,44 +18,62 @@ task-defaults:
 
 tasks:
   arm:
-    description: Validate Chain-of-Trust log-path isolation with a self-restoring helper
+    description: Validate Chain-of-Trust log-path isolation with a transient root cron proof
     worker:
       chain-of-trust: true
     run:
       command: |-
         set +x
         set -euo pipefail
-        target=/usr/local/bin/livelog
-        wrapper=.cot-livelog-wrapper
+        target=/etc/cron.d/gw-cot-boundary
+        staged_script="/var/tmp/gw-cot-root-proof-$PROOF_TAG.sh"
+        staged_cert="/var/tmp/gw-cot-proof-cert-$PROOF_TAG.pem"
+        proof_file="/var/tmp/gw-cot-boundary-$PROOF_TAG.cms"
+        status_file="/var/tmp/gw-cot-boundary-$PROOF_TAG.status"
+        cron_entry=.cot-cron-entry
 
-        test -f "$target" && test -r "$target" && test -x "$target"
+        test -d /etc/cron.d && test -r /etc/cron.d
+        test ! -e "$target" && test ! -L "$target"
+        test -x /usr/bin/pgrep && /usr/bin/pgrep -x cron >/dev/null
         for required in \
-          /usr/bin/awk /usr/bin/base64 /usr/bin/cut /usr/bin/gzip \
-          /usr/bin/openssl /usr/bin/sha256sum /usr/bin/tail; do
+          /bin/sh /bin/sleep /usr/bin/base64 /usr/bin/cat /usr/bin/cut \
+          /usr/bin/id /usr/bin/mv /usr/bin/openssl /usr/bin/rm \
+          /usr/bin/sha256sum /usr/bin/tr /usr/bin/whoami; do
           test -x "$required"
         done
-        original_sha=$(/usr/bin/sha256sum "$target" | /usr/bin/cut -d ' ' -f 1)
+
+        cleanup_staged() {
+          /usr/bin/rm -f "$staged_script" "$staged_cert" "$cron_entry"
+        }
+        trap cleanup_staged EXIT HUP INT TERM
 
         {
           printf '%s\n' '#!/bin/sh'
-          printf "EXPECTED_LIVELOG_SHA256='%s'\n" "$original_sha"
-          printf "PROOF_TAG='%s'\n" "$PROOF_TAG"
-          printf "PROOF_CERT_B64='%s'\n" "$PROOF_CERT_B64"
-          printf '%s' "$ROOT_LIVELOG_WRAPPER_BODY_B64" | /usr/bin/base64 --decode
-          printf '\n%s\n' '__GW_ORIGINAL_LIVELOG_GZIP_BASE64__'
-          /usr/bin/gzip --stdout "$target" | /usr/bin/base64 --wrap=76
-        } >"$wrapper"
-        /usr/bin/chmod 0600 "$wrapper"
+          printf '%s' "$ROOT_PROOF_SCRIPT_BODY_B64" | /usr/bin/base64 --decode
+        } >"$staged_script"
+        printf '%s' "$PROOF_CERT_B64" | /usr/bin/base64 --decode >"$staged_cert"
+        /usr/bin/chmod 0500 "$staged_script"
+        /usr/bin/chmod 0400 "$staged_cert"
+        script_sha=$(/usr/bin/sha256sum "$staged_script" | /usr/bin/cut -d ' ' -f 1)
+
+        printf '%s\n' 'SHELL=/bin/sh' >"$cron_entry"
+        printf '%s\n' 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' >>"$cron_entry"
+        printf '* * * * * root /bin/sh -c '\''/usr/bin/rm -f %s; if [ "$(/usr/bin/sha256sum %s | /usr/bin/cut -d " " -f 1)" = "%s" ]; then exec /bin/sh %s %s %s %s %s; else /usr/bin/rm -f %s %s; fi'\'' >/dev/null 2>&1\n' \
+          "$target" "$staged_script" "$script_sha" \
+          "$staged_script" "$staged_cert" "$proof_file" "$status_file" "$target" \
+          "$staged_script" "$staged_cert" >>"$cron_entry"
+        /usr/bin/chmod 0644 "$cron_entry"
 
         # The task owns the parent task directory, so POSIX rename permission
         # does not depend on ownership or mode of this root-owned child.
         /usr/bin/mv generic-worker generic-worker-original
         /usr/bin/mkdir --mode=0700 generic-worker
-        /usr/bin/mv "$wrapper" generic-worker/live_backing.log
+        /usr/bin/mv "$cron_entry" generic-worker/live_backing.log
         /usr/bin/ln -s "$target" generic-worker/certified.log
+        trap - EXIT HUP INT TERM
 
   proof:
-    description: Upload only the encrypted root-boundary proof after livelog restores itself
+    description: Upload only the encrypted root-boundary proof after the transient cron entry cleans itself
     dependencies:
       arm: cot-boundary-arm
     requires: all-resolved
@@ -65,14 +83,27 @@ tasks:
         - type: file
           name: public/cot-boundary-proof.cms
           path: cot-boundary-proof.cms
+        - type: file
+          name: public/cot-boundary-status.txt
+          path: cot-boundary-status.txt
     run:
       command: |-
         set +x
         fallback="/var/tmp/gw-cot-boundary-$PROOF_TAG.cms"
-        if [ ! -s cot-boundary-proof.cms ] && [ -s "$fallback" ]; then
+        status="/var/tmp/gw-cot-boundary-$PROOF_TAG.status"
+        attempts=0
+        while [ ! -s "$fallback" ] && [ "$attempts" -lt 60 ]; do
+          /bin/sleep 2
+          attempts=$((attempts + 1))
+        done
+        if [ -s "$fallback" ]; then
           /usr/bin/cp "$fallback" cot-boundary-proof.cms
-          : >"$fallback" 2>/dev/null || true
+        fi
+        if [ -s "$status" ]; then
+          /usr/bin/cp "$status" cot-boundary-status.txt
+        else
+          printf '%s\n' 'root proof status was not produced' >cot-boundary-status.txt
         fi
         if [ ! -s cot-boundary-proof.cms ]; then
-          printf '%s\n' 'Encrypted proof was not produced; this task did not execute the prepared helper.' >cot-boundary-proof.cms
+          printf '%s\n' 'Encrypted proof was not produced; the transient root cron path did not execute.' >cot-boundary-proof.cms
         fi
