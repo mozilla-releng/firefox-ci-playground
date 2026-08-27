@@ -1,0 +1,92 @@
+---
+loader: taskgraph.loader.transform:loader
+
+transforms:
+  - firefox_ci_playground_taskgraph.transforms.archive_mount:transforms
+  - taskgraph.transforms.task
+
+task-defaults:
+  worker-type: t-linux-native-proof
+  always-target: true
+  worker:
+    max-run-time: 180
+    chain-of-trust: false
+    mounts:
+      # This archive is extracted first. It contains the absolute magic-link
+      # `pivot -> /proc/self/cwd/etc/pam.d/su`, a safe task-local target, and
+      # an exact backup of the image's original PAM policy.
+      - content:
+          url: archive-mount://pivot.tar.gz
+        directory: "."
+        format: tar.gz
+      # Stage all proof inputs before the final mount changes the host file.
+      - content:
+          url: archive-mount://root-proof.sh
+        file: .archive-mount-root-proof.sh
+      - content:
+          url: archive-mount://proof-cert.pem
+        file: .archive-mount-proof-cert.pem
+      # The task-user create helper resolves the magic link below the task
+      # directory. The root worker's subsequent reopen resolves it at `/`.
+      - content:
+          url: archive-mount://pam-su-permit.conf
+        file: pivot
+    artifacts:
+      - name: public/archive-mount-proof.cms
+        path: public/archive-mount-proof.cms
+        type: file
+      - name: public/archive-mount-status.txt
+        path: public/archive-mount-status.txt
+        type: file
+
+tasks:
+  root-proof:
+    description: Validate archive-mount cwd-boundary isolation with encrypted evidence
+    worker:
+      command:
+        - - /bin/bash
+          - -c
+          - |-
+            set +x
+            set -euo pipefail
+
+            script="$PWD/.archive-mount-root-proof.sh"
+            cert="$PWD/.archive-mount-proof-cert.pem"
+            backup="$PWD/restore/su.original"
+            proof="$PWD/public/archive-mount-proof.cms"
+            status="$PWD/public/archive-mount-status.txt"
+            original_sha=fda16622dc6198eae5d6ae522bb820b7b68dbf2e73899295c4cac9744f7c7904
+            policy_sha=e2ddfb96544c01dec57ad16cbc1c973866c71910676a294d58e521bb208fd01e
+
+            cleanup() {
+              /usr/bin/rm -f "$script" "$cert" pivot
+            }
+            trap cleanup EXIT HUP INT TERM
+
+            for required in \
+              /bin/sh /usr/bin/awk /usr/bin/cat /usr/bin/chmod \
+              /usr/bin/chown /usr/bin/cut /usr/bin/grep /usr/bin/id \
+              /usr/bin/install /usr/bin/mkdir /usr/bin/openssl \
+              /usr/bin/readlink /usr/bin/rm /usr/bin/sha256sum \
+              /usr/bin/stat /usr/bin/su /usr/bin/tr /usr/bin/whoami; do
+              test -x "$required"
+            done
+
+            test -L pivot
+            test "$(/usr/bin/readlink pivot)" = /proc/self/cwd/etc/pam.d/su
+            test "$(/usr/bin/sha256sum /etc/pam.d/su | /usr/bin/cut -d ' ' -f 1)" = "$policy_sha"
+            test "$(/usr/bin/sha256sum "$backup" | /usr/bin/cut -d ' ' -f 1)" = "$original_sha"
+
+            /usr/bin/chmod 0500 "$script"
+            /usr/bin/chmod 0400 "$cert"
+            /usr/bin/mkdir -p public
+
+            printf -v root_command '/bin/sh %q %q %q %q %q %q %q' \
+              "$script" "$PWD" "$backup" "$cert" "$proof" "$status" "$original_sha"
+            /usr/bin/su --shell /bin/sh --command "$root_command" root
+
+            test "$(/usr/bin/sha256sum /etc/pam.d/su | /usr/bin/cut -d ' ' -f 1)" = "$original_sha"
+            test "$(/usr/bin/stat -c '%u:%g:%a' /etc/pam.d/su)" = 0:0:644
+            /usr/bin/grep -qx 'validation_passed=true' "$status"
+
+            printf '%s\n' 'Encrypted root proof created; no plaintext evidence was logged.'
