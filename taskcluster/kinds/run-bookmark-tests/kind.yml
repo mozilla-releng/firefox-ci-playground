@@ -1,0 +1,22 @@
+---
+transforms:
+  - firefox_ci_playground_taskgraph.transforms.bookmark_test:transforms
+
+task-defaults:
+  worker-type: t-linux-large
+  worker:
+    docker-image: {in-tree: linux}
+    max-run-time: 1800
+    artifacts:
+      - name: public/results
+        path: /builds/worker/artifacts
+        type: directory
+
+tasks:
+  bookmark_test:
+    run:
+      using: run-task
+      cwd: "{checkout}"
+      command: |-
+        /root/firefox/firefox --version ;
+        python -m pytest --ci --run-headless --fx-executable /root/firefox/firefox --geckodriver /root/geckodriver --junitxml=/builds/worker/artifacts/results.xml tests/

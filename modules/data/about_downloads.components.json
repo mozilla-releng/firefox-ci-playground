@@ -1,0 +1,12 @@
+{
+    "no-downloads-label": {
+        "selectorData": "downloadsListEmptyDescription",
+        "strategy": "id",
+        "groups": []
+    },
+    "download-target": {
+        "selectorData": "downloadTarget",
+        "strategy": "class",
+        "groups": []
+    }
+}

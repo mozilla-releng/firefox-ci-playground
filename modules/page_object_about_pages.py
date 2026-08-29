@@ -1,0 +1,601 @@
+import logging
+import os
+import re
+
+from pypom import Page
+from selenium.common.exceptions import (
+    StaleElementReferenceException,
+    WebDriverException,
+)
+from selenium.webdriver import ActionChains, Firefox
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
+
+from modules.page_base import BasePage
+from modules.page_object_generics import GenericPage
+from modules.util import BrowserActions
+
+
+class AboutCache(BasePage):
+    """
+    POM for the about:cache page
+    """
+
+    URL_TEMPLATE = "about:cache"
+
+    def open_disk_or_memory_cache_entries(self, storage: str = "disk"):
+        """
+        Open the cache entries list for the given storage type.
+
+        Argument:
+            storage: 'disk' or 'memory'
+        """
+        self.click_on(f"{storage}-cache-link")
+
+    def get_entries_text(self):
+        """Return the full text content of the cache entries table, lowercased."""
+        return self.get_element("entries-table").text.lower()
+
+    def get_number_of_entries(self):
+        """Return the 'Number of entries' value from the about:cache overview."""
+        return self.get_element("number-of-entries").text
+
+
+class AboutConfig(BasePage):
+    """
+    The POM for the about:config page
+
+    Attributes
+    ----------
+    driver: selenium.webdriver.Firefox
+        WebDriver object under test
+    """
+
+    URL_TEMPLATE = "about:config"
+
+    def search_pref(self, term: str) -> BasePage:
+        self.set_content_context()
+        self.driver.get("about:config")
+        self.expect(EC.title_contains("Advanced Preferences"))
+        searchbar = self.get_element("about-config-search-input")
+        searchbar.clear()
+        searchbar.send_keys(term + Keys.ENTER)
+        return self
+
+    def toggle_true_false_config(self, term: str) -> BasePage:
+        """
+        Main method to toggle a true false pref in about:config
+        Note: To use this in a test, use pref_list - ("browser.aboutConfig.showWarning", False),
+        in the test suite's conftest.py or use add_to_prefs_list fixture in the test itself
+        """
+        self.search_pref(term)
+        toggle_tf_button = self.get_element("value-edit-button")
+        toggle_tf_button.click()
+        return self
+
+    def edit_config_value(self, term: str, value) -> BasePage:
+        """
+        Main method to change a config's value in about:config
+        Note: To use this in a test, use pref_list - ("browser.aboutConfig.showWarning", False),
+        in the test suite's conftest.py or use add_to_prefs_list fixture in the test itself.
+        """
+        self.search_pref(term)
+        pref_edit_button = self.get_element("value-edit-button")
+        pref_edit_button.click()
+        pref_edit = self.get_element("value-edit-field")
+        pref_edit.send_keys(value)
+        pref_edit_button.click()
+        return self
+
+    def get_pref_value(self, term: str):
+        """Return the current value string for a preference from about:config."""
+        self.search_pref(term)
+        return self.get_element("pref-cell-value").text.strip()
+
+    def toggle_config_value(self, term: str, value) -> BasePage:
+        """
+        Main method to toggle a config's value in about:config
+        Note: To use this in a test, use pref_list - ("browser.aboutConfig.showWarning", False),
+        in the test suite's conftest.py or use add_to_prefs_list fixture in the test itself
+        """
+        self.search_pref(term)
+        pref_edit_button = self.get_element("value-edit-button")
+        pref_edit_button.click()
+        return self
+
+
+class AboutDownloads(BasePage):
+    """
+    The POM for the about:downloads page
+
+    Attributes
+    ----------
+    driver: selenium.webdriver.Firefox
+        WebDriver object under test
+    """
+
+    URL_TEMPLATE = "about:downloads"
+
+    def is_empty(self) -> bool:
+        """Checks to see if downloads page is empty"""
+        found = False
+        try:
+            self.element_visible("no-downloads-label")
+            found = True
+        finally:
+            return found
+
+    def get_downloads(self) -> list:
+        """Get all download targets"""
+        return self.get_elements("download-target")
+
+    def wait_for_num_downloads(self, num: int) -> BasePage:
+        """Wait for the number of downloads to equal num"""
+        self.expect(lambda _: len(self.get_downloads()) == num)
+        return self
+
+
+class AboutLogins(BasePage):
+    """
+    Page Object Model for about:logins, which goes through Shadow DOMs.
+
+    Attributes
+    ----------
+    driver: selenium.webdriver.Firefox
+        WebDriver object under test
+    """
+
+    URL_TEMPLATE = "about:logins"
+
+    def __init__(self, driver: Firefox, **kwargs):
+        super().__init__(driver, **kwargs)
+        self.ba = BrowserActions(self.driver)
+
+    def click_add_login_button(self) -> Page:
+        """Click the Add Login button"""
+        self.get_element("create-login-button").click()
+        logging.info("Clicked add login button")
+        return self
+
+    def create_new_login(self, form_info: dict) -> Page:
+        """
+        Given a dict with keys that match the valid item types in the
+        new login dialog, create a new login with those values through UI.
+        """
+        try:
+            for item_type, value in form_info.items():
+                logging.info(f"Filling {item_type} with {value}")
+                self.fill("login-item-type", value, labels=[item_type])
+            logging.info("Clicking submit...")
+            self.wait.until(
+                lambda _: (
+                    self.get_element("create-login-button").get_attribute("disabled")
+                    is None
+                )
+            )
+            logging.info("Submitted.")
+        except (WebDriverException, StaleElementReferenceException):
+            logging.info("Element not found or stale, pressing 'Save Changes'")
+            self.get_element("save-changes-button").click()
+            logging.info("Pressed.")
+        return self
+
+    def check_logins_present(
+        self, actual_logins: dict, expected_logins: dict, check_password=False
+    ):
+        """
+        Checks that all logins expected are present in the list of elements
+        ----
+        logins: {"username@website": "password"}
+            Example:
+            username: hello, website: mozilla.social, password: pwpwpwpw
+            logins = {"hello@mozilla.social": "pwpwpwpw}
+        """
+        # Check that all created logins are here
+        if not check_password:
+            for login in expected_logins.keys():
+                assert login in actual_logins
+        else:
+            assert expected_logins == actual_logins
+
+    def remove_password_csv(self, downloads_dir):
+        # Delete password.csv, if there is one in the export location
+        passwords_csv = os.path.join(downloads_dir, "passwords.csv")
+        for file in os.listdir(downloads_dir):
+            delete_files_regex = re.compile(r"\bpasswords.csv\b")
+            if delete_files_regex.match(file):
+                os.remove(passwords_csv)
+
+    def verify_csv_export(
+        self, downloads_folder: str, filename: str, timeout: int = 20
+    ):
+        """
+        Wait until the exported CSV file is present, non-empty, and readable.
+        """
+        csv_file = os.path.join(downloads_folder, filename)
+
+        def file_ready(_):
+            # Check if the file path exists. If not, continue
+            if not os.path.exists(csv_file):
+                return False
+            try:
+                # Verify that the file isn't empty
+                if os.path.getsize(csv_file) == 0:
+                    return False
+
+                # Attempt to read a few bytes to ensure the file is unlocked
+                # and readable (handles cases where the OS is still writing).
+                with open(csv_file, "r", encoding="utf-8") as f:
+                    f.read(10)
+                return True
+
+            except (OSError, PermissionError) as e:
+                # Log and retry until timeout instead of failing immediately
+                logging.debug(f"[verify_csv_export] File not ready yet: {e}")
+                return False
+
+        WebDriverWait(self.driver, timeout).until(file_ready)
+        return csv_file
+
+    def add_login(self, origin: str, username: str, password: str):
+        """
+        Adds a new saved login entry.
+
+        Args:
+            origin (str): The site URL (e.g., https://example.com)
+            username (str): The username to save
+            password (str): The password to save
+        """
+        self.click_add_login_button()
+        self.create_new_login(
+            {
+                "origin": origin,
+                "username": username,
+                "password": password,
+            }
+        )
+
+    def export_passwords_csv(self, downloads_folder: str, filename: str):
+        """
+        Export passwords to a CSV file and navigate the save dialog to the target location.
+
+        Args:
+            downloads_folder (str): The folder where the CSV should be saved.
+            filename (str): The name of the CSV file.
+        """
+        target_path = os.path.join(downloads_folder, filename)
+        use_mock_picker = self.sys_platform() == "Linux"
+        if use_mock_picker:
+            self.install_mock_file_picker(target_path)
+
+        # Open about:logins and click export buttons
+        try:
+            self.open()
+            self.click_on("menu-button")
+            self.click_on("export-passwords-button")
+            self.click_on("continue-export-button")
+
+            if use_mock_picker:
+                self.wait_for_mock_file_picker()
+            else:
+                # Wait for export dialog and navigate to folder
+                page = GenericPage(self.driver)
+                page.navigate_dialog_to_location(downloads_folder, filename)
+        finally:
+            if use_mock_picker:
+                self.cleanup_mock_file_picker()
+
+    def click_copy_username_button(self) -> Page:
+        """Click the copy username button"""
+        self.click_on("copy-username")
+        return self
+
+    def click_copy_password_button(self) -> Page:
+        """Click the copy password button"""
+        self.click_on("copy-password")
+        return self
+
+    def click_reveal_password_button(self) -> Page:
+        """Click the reveal password button"""
+        self.click_on("show-password-checkbox")
+        return self
+
+    def verify_reveal_button_cursor_pointer(self):
+        """
+        Verify that hovering over the Reveal/Hide password button
+        changes the mouse cursor to a hand pointer
+        """
+        element = self.get_element("show-password-checkbox")
+
+        # hover over element
+        ActionChains(self.driver).move_to_element(element).perform()
+
+        # read computed cursor style
+        cursor = element.value_of_css_property("cursor")
+
+        assert cursor == "pointer", f"Expected pointer cursor, got {cursor}"
+
+    @BasePage.context_chrome
+    def enter_primary_password(self, primary_password, expected_tabs=2) -> BasePage:
+        """
+        Waits for the primary password prompt in chrome context,
+        switches to the new tab, enters the password, and submits it.
+        """
+
+        original_window = self.driver.current_window_handle
+
+        # Wait until new tab (prompt) is opened
+        self.wait_for_num_tabs(expected_tabs)
+
+        # Switch to the newest tab
+        self.driver.switch_to.window(self.driver.window_handles[-1])
+
+        # Re-fetch element to avoid stale reference
+        primary_password_prompt = self.get_element("primary-password-prompt")
+        assert primary_password_prompt.is_displayed()
+
+        # Enter password
+        input_field = self.get_element("primary-password-dialog-input-field")
+        input_field.send_keys(primary_password)
+        input_field.send_keys(Keys.ENTER)
+
+        # Switch back after prompt closes
+        self.wait.until(lambda d: len(d.window_handles) == 1)
+        self.driver.switch_to.window(original_window)
+
+        return self
+
+    @BasePage.context_chrome
+    def dismiss_primary_password_prompt(self, expected_tabs=2) -> BasePage:
+        """
+        Switches to the primary password prompt tab and dismisses it using ESC.
+        """
+
+        original_window = self.driver.current_window_handle
+
+        # Wait until new tab (prompt) is opened
+        self.wait_for_num_tabs(expected_tabs)
+
+        # Switch to the newest tab (prompt)
+        self.driver.switch_to.window(self.driver.window_handles[-1])
+
+        # Re-fetch element to avoid stale reference
+        primary_password_prompt = self.get_element("primary-password-prompt")
+
+        # Dismiss prompt
+        primary_password_prompt.send_keys(Keys.ESCAPE)
+
+        # Switch back after prompt closes
+        self.wait.until(lambda d: len(d.window_handles) == 1)
+        self.driver.switch_to.window(original_window)
+
+        return self
+
+    def assert_revealed_password(self, expected_password: str) -> BasePage:
+        """Reveal saved password and assert it matches the expected value"""
+        saved_password = self.get_element(
+            "about-logins-page-password-revealed"
+        ).get_attribute("value")
+
+        assert saved_password == expected_password, (
+            f"Expected '{expected_password}', got '{saved_password}'"
+        )
+        return self
+
+    def dismiss_pp_if_appears(self, timeout=3):
+        """
+        Dismiss the Primary Password alert if it appears within timeout seconds
+        """
+        try:
+            WebDriverWait(self.driver, timeout).until(EC.alert_is_present())
+            self.driver.switch_to.alert.dismiss()
+        except Exception:
+            pass
+        return self
+
+    def assert_username_present(self, username: str) -> BasePage:
+        """
+        Waits until a visible login list item with the given username is present
+        """
+        self.wait.until(
+            lambda _: any(
+                r.get_attribute("username") == username
+                for r in self.get_elements("login-list-item")
+                if r.is_displayed()
+            ),
+            message=f"{username} not found in saved logins",
+        )
+        return self
+
+
+class AboutPrivatebrowsing(BasePage):
+    """
+    POM for about:privatebrowsing page
+    """
+
+    URL_TEMPLATE = "about:privatebrowsing"
+
+
+class AboutProfiles(BasePage):
+    """
+    POM for about:profiles page
+    """
+
+    URL_TEMPLATE = "about:profiles"
+
+
+class AboutProtections(BasePage):
+    """
+    POM for about:protections page
+    """
+
+    URL_TEMPLATE = "about:protections"
+
+    def verify_lockwise_scanned_text(self, expected_count: int):
+        """Verify the Lockwise 'N password(s) stored securely.' message matches `expected_count`."""
+        expected = (
+            f"{expected_count} password stored securely."
+            if expected_count == 1
+            else f"{expected_count} passwords stored securely."
+        )
+        self.element_has_text("lockwise-scanned-text", expected)
+        return self
+
+
+class AboutTelemetry(BasePage):
+    """
+    The POM for the about:telemetry page
+    """
+
+    URL_TEMPLATE = "about:telemetry"
+
+    def open_raw_json_data(self):
+        """
+        Opens the Raw JSON telemetry view (against bnVsbA== / null payload timing).
+        """
+        existing_tabs = len(self.driver.window_handles)
+
+        # Click "Raw JSON" from categories on the left
+        self.element_clickable("category-raw")
+        self.get_element("category-raw").click()
+
+        # Wait for the new tab before switching
+        self.wait.until(lambda d: len(d.window_handles) == existing_tabs + 1)
+        self.switch_to_new_tab()
+        self.clear_cache()
+
+        # Wait for Raw Data tab to be clickable, then click it
+        self.element_clickable("rawdata-tab")
+        self.get_element("rawdata-tab").click()
+
+        # Wait for data URL
+        self.wait.until(
+            lambda d: d.current_url.startswith("data:application/json;base64,")
+        )
+
+        # Wait until it's not the "null" payload (bnVsbA==); telemetry can take time to flush
+        self.custom_wait(timeout=30).until(
+            lambda d: "base64,bnVsbA==" not in d.current_url
+        )
+
+        return self
+
+    def search_telemetry(self, term: str) -> "AboutTelemetry":
+        search_box = self.get_element("search")
+        search_box.clear()
+        search_box.send_keys(term)
+        return self
+
+    def is_telemetry_entry_present(
+        self, table_selector_key: str, expected_telemetry_data
+    ) -> bool:
+        """
+        Generic method to check if a telemetry row exists in a given table.
+        """
+
+        # Wait for the table to exist in DOM
+        self.get_element(table_selector_key)
+
+        # Retrieve all rows from the telemetry table
+        rows = self.get_elements(table_selector_key)
+
+        for row in reversed(rows):
+            cells = [cell.text.strip() for cell in row.find_elements(By.TAG_NAME, "td")]
+            if all(value in cells for value in expected_telemetry_data):
+                return True
+
+        return False
+
+    def is_telemetry_scalars_entry_present(self, expected_data):
+        return self.is_telemetry_entry_present(
+            "telemetry-scalars-table-rows", expected_data
+        )
+
+    def is_telemetry_events_entry_present(self, expected_data):
+        return self.is_telemetry_entry_present(
+            "telemetry-events-table-rows", expected_data
+        )
+
+    def is_telemetry_keyed_scalars_entry_present(self, expected_data):
+        return self.is_telemetry_entry_present(
+            "telemetry-keyed-scalars-table-rows", expected_data
+        )
+
+
+class AboutNetworking(BasePage):
+    """
+    POM for about:networking page
+    """
+
+    URL_TEMPLATE = "about:networking"
+
+    def select_network_category(self, option: str):
+        """
+        Clicks the corresponding sidebar tab in the about:networking page.
+        """
+        # Use dynamic ID based on the option name
+        self.get_element("networking-sidebar-category", labels=[option]).click()
+
+    def get_all_dns_rows(self) -> list[tuple[str, str]]:
+        """Get all DNS rows as (host, trr) text tuples.
+
+        Caller must ensure the DNS table is visible before calling. Returns []
+        if an individual row goes stale mid-iteration (table is re-rendering);
+        callers that poll can treat [] as a retry signal.
+        """
+        rows = self.find_elements(By.XPATH, "//tbody[@id='dns_content']/tr")
+        result = []
+        for row in rows:
+            try:
+                cells = row.find_elements(By.TAG_NAME, "td")
+                if len(cells) >= 3:
+                    result.append(
+                        (cells[0].text.strip(), cells[2].text.strip().lower())
+                    )
+            except StaleElementReferenceException:
+                continue
+        return result
+
+    def wait_for_dns_entry(self, host: str, trr: str = "true") -> BasePage:
+        """Wait until a DNS entry for the given host appears in the table.
+
+        Ensures the table is visible before polling.
+        """
+        self.element_visible("dns-content")
+
+        expected_host = host.strip()
+        expected_trr = trr.strip().lower()
+
+        def _entry_present(_):
+            return any(
+                row_host == expected_host and row_trr == expected_trr
+                for row_host, row_trr in self.get_all_dns_rows()
+            )
+
+        self.custom_wait(timeout=30).until(
+            _entry_present,
+            message=f"DNS entry for host '{host}' with TRR='{trr}' did not appear",
+        )
+        return self
+
+
+class AboutGlean(BasePage):
+    """POM for about:glean"""
+
+    URL_TEMPLATE = "about:glean"
+
+    def change_ping_id(self, ping_id: str) -> "AboutGlean":
+        """Change the Glean ping id to the given string."""
+        ba = BrowserActions(self.driver)
+        self.click_on("manual-testing")
+        ping_input = self.get_element("ping-id-input")
+        ba.clear_and_fill(ping_input, ping_id)
+        self.wait.until(
+            EC.text_to_be_present_in_element(
+                self.get_selector("ping-submit-label"), ping_id
+            )
+        )
+        self.get_element("ping-submit-button").click()
+        return self

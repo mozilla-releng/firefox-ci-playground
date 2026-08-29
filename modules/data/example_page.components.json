@@ -1,0 +1,19 @@
+{
+    "title-header": {
+        "selectorData": "h1",
+        "strategy": "tag",
+        "groups": []
+    },
+    "take-screenshot-box": {
+        "selectorData": "screenshotsPagePanel",
+        "strategy": "id",
+        "groups": [
+            "doNotCache"
+        ]
+    },
+    "learn-more": {
+        "selectorData": "Learn more",
+        "strategy": "link_text",
+        "groups": []
+    }
+}

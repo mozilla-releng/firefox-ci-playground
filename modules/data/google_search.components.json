@@ -1,0 +1,9 @@
+{
+    "search-bar-textarea": {
+        "selectorData": "textarea[aria-label='Search']",
+        "strategy": "css",
+        "groups": [
+            "requiredForPage"
+        ]
+    }
+}

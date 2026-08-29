@@ -1,0 +1,22 @@
+{
+  "about-protections-save-passwords-button": {
+    "selectorData": "save-passwords-button",
+    "strategy": "id",
+    "groups": []
+  },
+  "manage-privacy-security": {
+    "selectorData": "protection-settings",
+    "strategy": "id",
+    "groups": []
+  },
+  "lockwise-scanned-text": {
+    "selectorData": "lockwise-scanned-text",
+    "strategy": "id",
+    "groups": []
+  },
+  "manage-passwords-button": {
+    "selectorData": "manage-passwords-button",
+    "strategy": "id",
+    "groups": []
+  }
+}

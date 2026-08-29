@@ -1,0 +1,15 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+selenium = "<4.24"
+pytest = "<8.4"
+pypom = "2.2.4"
+faker = "26.3.0"
+jsonpath-ng = "1.6.1"
+pillow = "<10.5"
+
+[requires]
+python_version = "3.11"

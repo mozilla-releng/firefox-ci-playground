@@ -1,0 +1,25 @@
+{
+    "net-error-card": {
+        "selectorData": "net-error-card",
+        "strategy": "tag",
+        "groups": ["doNotCache"]
+    },
+    "error-title": {
+        "selectorData": "[data-l10n-id='neterror-dns-not-found-title']",
+        "strategy": "css",
+        "shadowParent": "net-error-card",
+        "groups": ["doNotCache"]
+    },
+    "error-short-description": {
+        "selectorData": "#error-intro strong",
+        "strategy": "css",
+        "shadowParent": "net-error-card",
+        "groups": ["doNotCache"]
+    },
+    "error-learn-more-link": {
+        "selectorData": "#error-learn-more-link",
+        "strategy": "css",
+        "shadowParent": "net-error-card",
+        "groups": ["doNotCache"]
+    }
+}
