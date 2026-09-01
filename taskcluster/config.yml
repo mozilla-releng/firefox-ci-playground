@@ -5,23 +5,18 @@ task-priority: low
 taskgraph:
   cached-task-prefix: "mozilla.v2.firefox-ci-playground"
   repositories:
-    firefox_ci_playground:
-      name: "firefox-ci-playground"
+    test:
+      name: "test"
 
 workers:
   aliases:
-    b-linux:
-      provisioner: '{trust-domain}-{level}'
-      implementation: docker-worker
-      os: linux
-      worker-type: '{alias}'
     images:
       provisioner: '{trust-domain}-{level}'
       implementation: docker-worker
       os: linux
-      worker-type: '{alias}'
-    t-linux:
+      worker-type: '{alias}-gcp'
+    linux:
       provisioner: '{trust-domain}-t'
       implementation: docker-worker
       os: linux
-      worker-type: '{alias}-docker'
+      worker-type: 't-{alias}-large-gcp'

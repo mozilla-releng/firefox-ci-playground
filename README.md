@@ -1,28 +1,9 @@
-# firefox-ci-playground
+[![Task Status](https://firefox-ci-tc.services.mozilla.com/api/github/v1/repository/mozilla-releng/firefox-ci-playground/main/badge.svg)](https://firefox-ci-tc.services.mozilla.com/api/github/v1/repository/mozilla-releng/firefox-ci-playground/main/latest)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/mozilla-releng/firefox-ci-playground/main.svg)](https://results.pre-commit.ci/latest/github/mozilla-releng/firefox-ci-playground/main)
+[![Code Coverage](https://codecov.io/gh/mozilla-releng/firefox-ci-playground/branch/main/graph/badge.svg?token=GJIV52ZQNP)](https://codecov.io/gh/mozilla-releng/firefox-ci-playground)
+[![Documentation Status](https://readthedocs.org/projects/test/badge/?version=latest)](https://test.readthedocs.io/en/latest/?badge=latest)
+[![License](https://img.shields.io/badge/license-MPL%202.0-orange.svg)](http://mozilla.org/MPL/2.0)
 
-This repo provides a place to experiment and play around with Taskgraph on the
-Firefox-CI Taskcluster instance.
+# test
 
-## How to Use
 
-1. Request write access to the repo in [#firefox-ci] on Matrix.
-2. Clone this repo (no need for a fork) and create a new branch based off of main.
-3. Create apps, add tasks, make changes, do whatever you want! If you are
-   unfamiliar with Taskgraph, the [official documentation] is a great resource
-   for getting started.
-4. Either create a pull request or push to a non-main branch (depending on what
-   you are testing out).
-
-   If you are creating a pull request, please keep it in the draft state so we
-   know that it is not intended to be merged.
-
-   If pushing to a non-main branch, please consider prefixing
-   it with your user name to help keep things tidy. E.g, assuming you named
-   your branch ``my-branch`` and your user name is ``user``, you can run:
-
-   $ git push origin my-branch:user/my-branch
-
-If you have any questions or requests, please reach out on [#firefox-ci]!
-
-[#firefox-ci]: https://matrix.to/#/#firefox-ci:mozilla.org
-[official documentation]: https://taskcluster-taskgraph.readthedocs.io/en/latest/

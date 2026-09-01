@@ -1,0 +1,11 @@
+_commit: 0.4.1-58-g1505f12
+_src_path: /home/ahal/dev/reps
+author: Mozilla Release Engineering <release+test@mozilla.com>
+github_slug: mozilla-releng/firefox-ci-playground
+level: 1
+min_python_version: '3.10'
+package_name: test
+project_name: test
+project_vcs: jj
+short_description: ''
+trust_domain: mozilla
